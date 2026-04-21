@@ -4,9 +4,13 @@ RUN apt-get update && apt-get install -y \
     libcurl4-openssl-dev \
     libonig-dev \
     zip unzip \
-    && docker-php-ext-install mysqli pdo pdo_mysql curl mbstring
+    && docker-php-ext-install mysqli pdo pdo_mysql curl mbstring \
+    && rm -rf /var/lib/apt/lists/*
 
-RUN a2enmod rewrite
+RUN a2dismod mpm_event mpm_worker 2>/dev/null || true \
+    && a2enmod mpm_prefork rewrite
+
+RUN echo 'ServerName localhost' >> /etc/apache2/apache2.conf
 
 RUN echo '<Directory /var/www/html>\n\
     Options Indexes FollowSymLinks\n\
@@ -22,3 +26,5 @@ RUN chown -R www-data:www-data /var/www/html \
     && chmod 777 /var/www/html/tmp
 
 EXPOSE 80
+
+CMD ["apache2-foreground"]
